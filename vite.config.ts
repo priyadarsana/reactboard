@@ -4,7 +4,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  base: "/reactboard/",  // Set base to your repo name for GitHub Pages
+  base: mode === 'production' ? '/reactboard/' : '/',
   
   server: {
     host: "::",
