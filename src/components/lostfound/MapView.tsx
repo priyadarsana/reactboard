@@ -8,6 +8,11 @@ import { PinChat } from './PinChat';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Import floor plan SVGs
+import floor0Svg from '/floor-plans/floor-0.svg?url';
+import floor1Svg from '/floor-plans/floor-1.svg?url';
+import floor2Svg from '/floor-plans/floor-2.svg?url';
+
 interface MapViewProps {
   item: any;
 }
@@ -28,11 +33,8 @@ export const MapView = ({ item }: MapViewProps) => {
     setCurrentFloor(Number(item.floor) || 0);
   }, [item.id, item.floor]);
 
-  const floorPlanImages = [
-    '/floor-plans/floor-0.svg',
-    '/floor-plans/floor-1.svg',
-    '/floor-plans/floor-2.svg',
-  ];
+  // Use imported SVGs instead of hardcoded paths
+  const floorPlanImages = [floor0Svg, floor1Svg, floor2Svg];
 
   const allPins = item.pins || [];
 
