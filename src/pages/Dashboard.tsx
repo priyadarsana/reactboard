@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { ModuleCard } from '@/components/ModuleCard';
+import { useDashboardCounts } from '@/components/DashboardStats';
 import {
   MapPin,
   MessageSquare,
@@ -12,13 +13,14 @@ import {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { counts } = useDashboardCounts();
 
   const modules = [
     {
       title: 'Lost & Found',
       description: 'Report and find lost items with map pins',
       icon: MapPin,
-      count: 12,
+      count: counts.lostAndFound > 0 ? counts.lostAndFound : undefined,
       gradient: 'bg-gradient-to-br from-primary to-primary/70',
       path: '/lost-found'
     },
@@ -26,6 +28,7 @@ const Dashboard = () => {
       title: 'General Chat',
       description: 'Connect with students and find faculty',
       icon: MessageSquare,
+      count: counts.generalChat > 0 ? counts.generalChat : undefined,
       gradient: 'bg-gradient-to-br from-accent to-accent/70',
       path: '/chat'
     },
@@ -33,7 +36,7 @@ const Dashboard = () => {
       title: 'Queries',
       description: 'Ask questions and get verified answers',
       icon: HelpCircle,
-      count: 5,
+      count: counts.queries > 0 ? counts.queries : undefined,
       gradient: 'bg-gradient-to-br from-success to-success/70',
       path: '/queries'
     },
@@ -41,7 +44,7 @@ const Dashboard = () => {
       title: 'Announcements',
       description: 'Important updates and notices',
       icon: Megaphone,
-      count: 3,
+      count: counts.announcements > 0 ? counts.announcements : undefined,
       gradient: 'bg-gradient-to-br from-warning to-warning/70',
       path: '/announcements'
     },
@@ -49,6 +52,7 @@ const Dashboard = () => {
       title: 'OD Requests',
       description: 'Submit and track on-duty requests',
       icon: FileText,
+      count: counts.odRequests > 0 ? counts.odRequests : undefined,
       gradient: 'bg-gradient-to-br from-destructive to-destructive/70',
       path: '/od-requests'
     },

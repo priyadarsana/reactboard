@@ -1,27 +1,57 @@
 import { useState, useEffect } from 'react';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, MapPin, List, ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
+import { Plus, MapPin, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { IndoorMap } from '@/components/IndoorMap';
+import { ItemList } from '@/components/lostfound/ItemList';
+import { MapView } from '@/components/lostfound/MapView';
+import { ItemDetails } from '@/components/lostfound/ItemDetails';
+import { ReportItemDialog } from '@/components/lostfound/ReportItemDialog';
+import { useNavigate } from 'react-router-dom';
 
 const LostFound = () => {
+  const navigate = useNavigate();
   const [items, setItems] = useState<any[]>([]);
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [showReportDialog, setShowReportDialog] = useState(false);
 
   useEffect(() => {
     fetchItems();
+    
+    // Real-time subscription to track status changes
+    const channel = supabase
+      .channel('lost_items_changes')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'lost_items'
+      }, () => {
+        fetchItems();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  useEffect(() => {
+    if (items.length > 0 && !selectedItemId) {
+      setSelectedItemId(items[0].id);
+    } else if (items.length === 0) {
+      setSelectedItemId(null);
+    } else if (selectedItemId && !items.find(item => item.id === selectedItemId)) {
+      // If selected item was removed, select first item
+      setSelectedItemId(items[0]?.id || null);
+    }
+  }, [items]);
 
   const fetchItems = async () => {
     const { data, error } = await supabase
       .from('lost_items')
       .select(`
         *,
-        profiles:reporter_id(name),
         pins(
           *,
           votes(vote_type)
@@ -30,123 +60,113 @@ const LostFound = () => {
       .order('created_at', { ascending: false });
 
     if (error) {
+      console.error('Supabase error:', error);
       toast.error('Failed to load items');
       return;
     }
 
+    console.log('Fetched items:', data);
     setItems(data || []);
   };
 
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      electronics: 'bg-primary',
-      books: 'bg-accent',
-      accessories: 'bg-success',
-      clothing: 'bg-warning',
-      id_cards: 'bg-destructive',
-      other: 'bg-muted'
-    };
-    return colors[category] || 'bg-muted';
-  };
+  // Only show active items
+  const activeItems = items.filter(item => item.status === 'open');
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      open: 'default',
-      matched: 'secondary',
-      returned: 'outline'
-    };
-    return colors[status] || 'default';
+  const selectedItem = items.find(item => item.id === selectedItemId);
+
+  const handleReportSuccess = () => {
+    setShowReportDialog(false);
+    fetchItems();
+    toast.success('Item reported successfully!');
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <DashboardHeader />
-      
-      <main className="container py-8 px-4">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-3xl font-bold mb-2">Lost & Found</h2>
-            <p className="text-muted-foreground">
-              Help find lost items in the CSE department
-            </p>
+
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {/* Back Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/')}
+              title="Back to Home"
+              className="hover:bg-gray-100"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            
+            {/* Title Section */}
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Lost & Found</h1>
+              <p className="text-sm text-gray-500">
+                {activeItems.length} active {activeItems.length === 1 ? 'item' : 'items'}
+              </p>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="icon"
-              onClick={() => setViewMode('list')}
+          
+          <div>
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => setShowReportDialog(true)}
             >
-              <List className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'map' ? 'default' : 'outline'}
-              size="icon"
-              onClick={() => setViewMode('map')}
-            >
-              <MapPin className="w-4 h-4" />
-            </Button>
-            <Button className="bg-gradient-to-r from-primary to-accent">
               <Plus className="w-4 h-4 mr-2" />
               Report Item
             </Button>
           </div>
         </div>
+      </div>
 
-        {viewMode === 'list' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((item) => {
-              const tickVotes = item.pins?.flatMap((p: any) => p.votes?.filter((v: any) => v.vote_type === 'tick')).length || 0;
-              const crossVotes = item.pins?.flatMap((p: any) => p.votes?.filter((v: any) => v.vote_type === 'cross')).length || 0;
+      {/* Main Content - FIXED LAYOUT */}
+      <div className="flex h-[calc(100vh-180px)]">
+        {/* Left Sidebar */}
+        <div className="w-80 border-r border-gray-200 bg-white overflow-y-auto flex-shrink-0">
+          <ItemList
+            items={activeItems}
+            selectedItemId={selectedItemId}
+            onSelectItem={setSelectedItemId}
+          />
+        </div>
 
-              return (
-                <Card key={item.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between mb-2">
-                      <Badge className={getCategoryColor(item.category)} variant="secondary">
-                        {item.category}
-                      </Badge>
-                      <Badge variant={getStatusColor(item.status) as any}>
-                        {item.status}
-                      </Badge>
-                    </div>
-                    <CardTitle className="text-xl">{item.title}</CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {item.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex gap-4">
-                        <div className="flex items-center gap-1 text-success">
-                          <ThumbsUp className="w-4 h-4" />
-                          <span>{tickVotes}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-destructive">
-                          <ThumbsDown className="w-4 h-4" />
-                          <span>{crossVotes}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MessageSquare className="w-4 h-4" />
-                          <span>{item.pins?.length || 0}</span>
-                        </div>
-                      </div>
-                      <span className="text-muted-foreground text-xs">
-                        {item.pins?.length || 0} pins
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="p-6">
-              <IndoorMap items={items} />
-            </CardContent>
-          </Card>
-        )}
-      </main>
+        {/* Right Side - Item Details + Map */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {selectedItem ? (
+            <>
+              {/* Item Details - FIXED HEIGHT */}
+              <div className="flex-shrink-0">
+                <ItemDetails item={selectedItem} />
+              </div>
+              
+              {/* Map View - TAKES REMAINING SPACE */}
+              <div className="flex-1 relative overflow-y-auto">
+                <MapView item={selectedItem} />
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-gray-500">
+              <div className="text-center">
+                <MapPin className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p className="text-lg font-semibold mb-1">No item selected</p>
+                <p className="text-sm">
+                  {activeItems.length === 0 
+                    ? '🎉 No active lost items! Everything has been found.'
+                    : 'Select an item to view its location on the map'}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Report Item Dialog */}
+      <ReportItemDialog 
+        open={showReportDialog}
+        onClose={() => setShowReportDialog(false)}
+        onSuccess={handleReportSuccess}
+      />
     </div>
   );
 };
