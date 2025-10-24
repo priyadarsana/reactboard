@@ -8,6 +8,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { MapPin, Check, X, Trash2, ChevronUp, ChevronDown, Image as ImageIcon } from 'lucide-react';
 
+// Import floor plan SVGs
+import floor0Svg from '/floor-plans/floor-0.svg?url';
+import floor1Svg from '/floor-plans/floor-1.svg?url';
+import floor2Svg from '/floor-plans/floor-2.svg?url';
+
 interface PinLocation {
   x: number;
   y: number;
@@ -34,11 +39,11 @@ export const ReportItemDialog = ({ open, onClose, onSuccess }: ReportItemDialogP
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const totalFloors = 3;
-  const floorPlanImages = [
-    '/floor-plans/floor-0.svg',
-    '/floor-plans/floor-1.svg',
-    '/floor-plans/floor-2.svg',
-  ];
+  
+  // Use imported SVGs instead of hardcoded paths
+  const floorPlanImages = [floor0Svg, floor1Svg, floor2Svg];
+
+  // ... rest of your code stays exactly the same ...
 
   useEffect(() => {
     if (!open) {
