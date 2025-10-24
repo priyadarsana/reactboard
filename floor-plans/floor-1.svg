@@ -1,0 +1,14 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#f3f4f6"/>
+  <rect x="100" y="80" width="250" height="200" fill="white" stroke="#9ca3af" stroke-width="2"/>
+  <text x="225" y="180" text-anchor="middle" font-size="18" fill="#374151">Conference A</text>
+  <rect x="400" y="80" width="300" height="200" fill="white" stroke="#9ca3af" stroke-width="2"/>
+  <text x="550" y="180" text-anchor="middle" font-size="18" fill="#374151">Open Office</text>
+  <rect x="100" y="320" width="200" height="180" fill="white" stroke="#9ca3af" stroke-width="2"/>
+  <text x="200" y="410" text-anchor="middle" font-size="18" fill="#374151">Kitchen</text>
+  <rect x="340" y="320" width="230" height="180" fill="white" stroke="#9ca3af" stroke-width="2"/>
+  <text x="455" y="410" text-anchor="middle" font-size="18" fill="#374151">Lounge</text>
+  <rect x="610" y="320" width="90" height="180" fill="white" stroke="#9ca3af" stroke-width="2"/>
+  <text x="655" y="410" text-anchor="middle" font-size="16" fill="#374151">Storage</text>
+  <rect x="80" y="280" width="640" height="30" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1"/>
+</svg>

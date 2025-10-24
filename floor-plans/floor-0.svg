@@ -1,0 +1,27 @@
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="800" fill="#f3f4f6"/>
+  
+  <!-- Conference Room A -->
+  <rect x="150" y="100" width="400" height="300" fill="white" stroke="#9ca3af" stroke-width="2"/>
+  <text x="350" y="250" text-anchor="middle" font-size="20" fill="#6b7280">Conference A</text>
+  
+  <!-- Open Office -->
+  <rect x="600" y="100" width="450" height="300" fill="white" stroke="#9ca3af" stroke-width="2"/>
+  <text x="825" y="250" text-anchor="middle" font-size="20" fill="#6b7280">Open Office</text>
+  
+  <!-- Kitchen -->
+  <rect x="150" y="450" width="300" height="250" fill="white" stroke="#9ca3af" stroke-width="2"/>
+  <text x="300" y="575" text-anchor="middle" font-size="20" fill="#6b7280">Kitchen</text>
+  
+  <!-- Lounge -->
+  <rect x="500" y="450" width="350" height="250" fill="white" stroke="#9ca3af" stroke-width="2"/>
+  <text x="675" y="575" text-anchor="middle" font-size="20" fill="#6b7280">Lounge</text>
+  
+  <!-- Storage -->
+  <rect x="900" y="450" width="150" height="250" fill="white" stroke="#9ca3af" stroke-width="2"/>
+  <text x="975" y="575" text-anchor="middle" font-size="16" fill="#6b7280">Storage</text>
+  
+  <!-- Corridor -->
+  <rect x="100" y="400" width="1000" height="40" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1"/>
+</svg>
