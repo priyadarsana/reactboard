@@ -8,7 +8,11 @@ export default defineConfig(({ mode }) => ({
   
   build: {
     outDir: 'docs',
+    assetsDir: 'assets',
+    copyPublicDir: true,
   },
+  
+  publicDir: 'public',
   
   server: {
     host: "::",
