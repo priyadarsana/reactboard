@@ -1,190 +1,184 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { GraduationCap, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/');
-      }
-    };
-    checkUser();
-  }, [navigate]);
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name },
-        emailRedirectTo: `${window.location.origin}/`
-      }
-    });
-
-    setLoading(false);
-
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success('Account created! You can now sign in.');
-      setEmail('');
-      setPassword('');
-      setName('');
-    }
+  // Email validation function
+  const isValidVeltechEmail = (email: string): boolean => {
+    const studentPattern = /^vtu\d+@veltech\.edu\.in$/;
+    const facultyPattern = /^tts\d+@veltech\.edu\.in$/;
+    
+    return studentPattern.test(email) || facultyPattern.test(email);
   };
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate email domain and format
+    if (!isValidVeltechEmail(email)) {
+      toast.error('Please use a valid Veltech email:\n• Students: vtu12345@veltech.edu.in\n• Faculty: tts1234@veltech.edu.in');
+      return;
+    }
+
+    // Validate display name for signup
+    if (isSignUp && !displayName.trim()) {
+      toast.error('Please enter your display name');
+      return;
+    }
+
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    try {
+      if (isSignUp) {
+        // Sign up with display name
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: undefined,
+            data: {
+              display_name: displayName.trim(),
+            }
+          }
+        });
 
-    setLoading(false);
+        if (error) throw error;
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success('Welcome back!');
-      navigate('/');
+        // Auto-login after signup
+        if (data.user) {
+          toast.success(`Welcome ${displayName}! Account created successfully.`);
+          navigate('/');
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+
+        toast.success('Successfully logged in!');
+        navigate('/');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-3 text-center">
-          <div className="mx-auto w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-            <GraduationCap className="w-6 h-6 text-white" />
-          </div>
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            ReactBoard
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">
+            {isSignUp ? 'Create Account' : 'Welcome Back'}
           </CardTitle>
-          <CardDescription>
-            Your CSE Department Hub
+          <CardDescription className="text-center">
+            {isSignUp 
+              ? 'Sign up with your Veltech email' 
+              : 'Sign in to your account'}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90"
+          <form onSubmit={handleAuth} className="space-y-4">
+            {/* Display Name - Only for Sign Up */}
+            {isSignUp && (
+              <div className="space-y-2">
+                <label htmlFor="displayName" className="text-sm font-medium">
+                  Display Name *
+                </label>
+                <Input
+                  id="displayName"
+                  type="text"
+                  placeholder="Enter your name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  required
                   disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    'Sign In'
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
+                  maxLength={50}
+                />
+                <p className="text-xs text-gray-500">
+                  This name will be visible to other users
+                </p>
+              </div>
+            )}
 
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    placeholder="Your Name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating account...
-                    </>
-                  ) : (
-                    'Create Account'
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium">
+                Email *
+              </label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="vtu12345@veltech.edu.in"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+              />
+              <div className="text-xs text-gray-500 space-y-1">
+                <p>✓ Students: vtu12345@veltech.edu.in</p>
+                <p>✓ Faculty: tts1234@veltech.edu.in</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="password" className="text-sm font-medium">
+                Password *
+              </label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                minLength={6}
+              />
+              {isSignUp && (
+                <p className="text-xs text-gray-500">
+                  Minimum 6 characters
+                </p>
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
+            </Button>
+          </form>
+
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setDisplayName(''); // Clear display name when switching
+              }}
+              className="text-sm text-blue-600 hover:underline"
+              disabled={loading}
+            >
+              {isSignUp
+                ? 'Already have an account? Sign in'
+                : "Don't have an account? Sign up"}
+            </button>
+          </div>
         </CardContent>
       </Card>
     </div>

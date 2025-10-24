@@ -11,7 +11,6 @@ import Queries from "./pages/Queries";
 import Announcements from "./pages/Announcements";
 import ODRequests from "./pages/ODRequests";
 import Faculty from "./pages/Faculty";
-import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -30,7 +29,6 @@ const App = () => (
           <Route path="/announcements" element={<Announcements />} />
           <Route path="/od-requests" element={<ODRequests />} />
           <Route path="/faculty" element={<Faculty />} />
-          <Route path="*" element={<NotFound />} />
         </Routes>
       </HashRouter>
     </TooltipProvider>
